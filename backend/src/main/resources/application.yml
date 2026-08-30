@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: caseflow
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/caseflow}
+    username: ${DATABASE_USER:caseflow}
+    password: ${DATABASE_PASSWORD:caseflow}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+

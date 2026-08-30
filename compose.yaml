@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-caseflow}
+      POSTGRES_USER: ${POSTGRES_USER:-caseflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-caseflow}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - caseflow-postgres:/var/lib/postgresql/data
+
+volumes:
+  caseflow-postgres:
+
