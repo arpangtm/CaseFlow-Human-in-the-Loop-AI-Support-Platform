@@ -18,6 +18,8 @@ Spring Boot API ----> PostgreSQL
         +----> metrics, traces, evaluation events
 ```
 
+The React workspace is a separate Vite application. During local development it proxies `/api` to Spring Boot; production can serve both applications behind the same origin.
+
 ## Backend boundaries
 
 - `casework`: intake, classification, priority, lifecycle, and comments.
