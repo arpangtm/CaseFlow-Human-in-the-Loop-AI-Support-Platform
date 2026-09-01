@@ -28,11 +28,13 @@ The React workspace is a separate Vite application. During local development it 
 - `review`: approve/edit/reject decisions and final-response ownership.
 - `observability`: execution logs, evaluation signals, metrics, and traces.
 
-The initial implementation is a modular monolith. Feature boundaries are kept explicit so asynchronous workers or separate services can be extracted only when load or ownership warrants it.
+The implementation is a modular monolith. Feature boundaries are kept explicit so asynchronous workers or separate services can be extracted only when load or ownership warrants it.
+
+Knowledge articles are normalized into bounded, overlapping chunks during ingestion. PostgreSQL stores a generated `tsvector` per chunk behind a GIN index, and retrieval applies the organization boundary before ranking matches. The retrieval API returns article and chunk identifiers with each evidence item so downstream recommendations can persist verifiable citations. An embedding-backed retriever can replace or augment this lexical baseline without changing that evidence contract.
 
 ## Data model sequence
 
-The initial schema introduces organizations, customers, and support cases. Later migrations add users, comments, articles, recommendations, review decisions, execution logs, and performance metrics alongside the feature that owns them.
+The schema includes organizations, customers, support cases, knowledge articles, and retrievable knowledge chunks. Later migrations add users, comments, recommendations, review decisions, execution logs, and performance metrics alongside the feature that owns them.
 
 ## Key invariants
 

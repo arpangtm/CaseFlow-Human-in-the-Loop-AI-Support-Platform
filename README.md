@@ -10,7 +10,8 @@ The current application provides:
 - deterministic baseline category and priority assignment;
 - PostgreSQL persistence with tenant-safe organization/customer relationships;
 - validation, RFC 9457 problem responses, health endpoints, and automated tests;
-- a React/TypeScript agent workspace for submitting, searching, filtering, and reviewing cases.
+- a React/TypeScript agent workspace for submitting, searching, filtering, and reviewing cases;
+- organization-scoped knowledge article ingestion and ranked PostgreSQL full-text retrieval.
 
 ## Run locally
 
@@ -48,6 +49,21 @@ List the demo organization's cases:
 
 ```bash
 curl 'http://localhost:8080/api/v1/cases?organizationId=00000000-0000-0000-0000-000000000001'
+```
+
+Add and retrieve knowledge for the demo organization:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/knowledge/articles \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "organizationId":"00000000-0000-0000-0000-000000000001",
+    "title":"Reset a customer password",
+    "content":"Password reset links expire after fifteen minutes.",
+    "sourceUrl":"https://docs.example.com/passwords"
+  }'
+
+curl 'http://localhost:8080/api/v1/knowledge/search?organizationId=00000000-0000-0000-0000-000000000001&query=password%20reset&limit=5'
 ```
 
 ## Test

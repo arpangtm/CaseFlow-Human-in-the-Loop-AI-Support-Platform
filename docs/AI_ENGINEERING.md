@@ -4,14 +4,16 @@
 
 The model produces a draft response and a recommended action. It cannot contact a customer or mutate an external system. A human must approve, edit, or reject every recommendation.
 
-## Planned RAG pipeline
+## RAG pipeline
 
 1. Normalize the case while retaining the original text.
-2. Retrieve organization-scoped knowledge chunks with embeddings.
-3. Apply deterministic filters and rank the candidate evidence.
+2. Retrieve organization-scoped knowledge chunks using the configured retriever.
+3. Apply deterministic tenant/status filters and rank the candidate evidence.
 4. Request a schema-constrained recommendation from the configured model.
 5. Persist the structured output, citations, prompt version, model configuration, latency, and token usage.
 6. Present it for human review and record the review decision separately.
+
+The current retriever is a deterministic PostgreSQL full-text baseline. Article ingestion creates bounded, overlapping chunks, and search returns persisted article/chunk identifiers, source metadata, content, and rank. Embedding retrieval can later augment this implementation while preserving the same organization-scoped evidence contract and deterministic test path.
 
 ## Provider design
 
@@ -28,4 +30,3 @@ Track retrieval relevance, citation validity, schema validity, reviewer acceptan
 - Redact sensitive values before telemetry export.
 - Use bounded context sizes and explicit refusal/escalation states.
 - Version prompts and output schemas in source control.
-
