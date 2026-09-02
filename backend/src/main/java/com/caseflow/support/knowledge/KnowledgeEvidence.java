@@ -2,7 +2,7 @@ package com.caseflow.support.knowledge;
 
 import java.util.UUID;
 
-record KnowledgeEvidence(
+public record KnowledgeEvidence(
         UUID articleId,
         UUID chunkId,
         String title,

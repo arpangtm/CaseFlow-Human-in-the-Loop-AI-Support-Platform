@@ -17,7 +17,9 @@ The current retriever is a deterministic PostgreSQL full-text baseline. Article 
 
 ## Provider design
 
-Application code will depend on `EmbeddingProvider` and `RecommendationProvider` interfaces. OpenAI and local-model adapters can implement those ports. Tests use deterministic fakes; no test suite should require paid model calls.
+Recommendation orchestration depends on a `RecommendationProvider` interface and exchanges typed request/result records. The result contract requires a draft response, recommended action, confidence, escalation flag, retrieved chunk citations, and provider metadata. A deterministic grounded provider is the local default; OpenAI or another local-model adapter can implement the same port. Tests use deterministic fakes and never require paid model calls.
+
+Before persistence, provider output is rejected if it is incomplete, exceeds bounds, or cites a chunk outside the evidence retrieved for the case. Valid output is saved as an immutable recommendation version with evidence snapshots, prompt/schema versions, provider and model configuration, latency, and token usage when supplied. Persistence always precedes presentation for review, and recommendation generation has no customer-facing side effect.
 
 ## Evaluation
 

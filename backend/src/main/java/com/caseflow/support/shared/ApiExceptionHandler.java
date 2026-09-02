@@ -1,6 +1,7 @@
 package com.caseflow.support.shared;
 
 import com.caseflow.support.casework.CaseNotFoundException;
+import com.caseflow.support.recommendation.RecommendationGenerationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -15,6 +16,11 @@ class ApiExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(RecommendationGenerationException.class)
+    ProblemDetail invalidRecommendation(RecommendationGenerationException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_GATEWAY, exception.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail validation(MethodArgumentNotValidException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Request validation failed");
@@ -24,4 +30,3 @@ class ApiExceptionHandler {
         return problem;
     }
 }
-

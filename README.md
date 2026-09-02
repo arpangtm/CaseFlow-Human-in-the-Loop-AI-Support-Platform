@@ -11,7 +11,8 @@ The current application provides:
 - PostgreSQL persistence with tenant-safe organization/customer relationships;
 - validation, RFC 9457 problem responses, health endpoints, and automated tests;
 - a React/TypeScript agent workspace for submitting, searching, filtering, and reviewing cases;
-- organization-scoped knowledge article ingestion and ranked PostgreSQL full-text retrieval.
+- organization-scoped knowledge article ingestion and ranked PostgreSQL full-text retrieval;
+- grounded, structured AI recommendations persisted with citations and model metadata for human review.
 
 ## Run locally
 
@@ -65,6 +66,16 @@ curl -X POST http://localhost:8080/api/v1/knowledge/articles \
 
 curl 'http://localhost:8080/api/v1/knowledge/search?organizationId=00000000-0000-0000-0000-000000000001&query=password%20reset&limit=5'
 ```
+
+Generate and list recommendations for a case:
+
+```bash
+curl -X POST 'http://localhost:8080/api/v1/cases/{caseId}/recommendations?organizationId=00000000-0000-0000-0000-000000000001'
+
+curl 'http://localhost:8080/api/v1/cases/{caseId}/recommendations?organizationId=00000000-0000-0000-0000-000000000001'
+```
+
+Generated recommendations are advisory records with `PENDING_REVIEW` status. These endpoints cannot send a response or resolve a case.
 
 ## Test
 

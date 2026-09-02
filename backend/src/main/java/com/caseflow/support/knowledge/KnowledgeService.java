@@ -10,7 +10,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 @Service
-class KnowledgeService {
+class KnowledgeService implements KnowledgeRetriever {
 
     static final int MAX_RESULTS = 20;
 
@@ -57,7 +57,7 @@ class KnowledgeService {
     }
 
     @Transactional(readOnly = true)
-    KnowledgeSearchResponse search(UUID organizationId, String query, int limit) {
+    public KnowledgeSearchResponse search(UUID organizationId, String query, int limit) {
         String normalizedQuery = query.strip();
         int boundedLimit = Math.max(1, Math.min(limit, MAX_RESULTS));
         List<KnowledgeEvidence> evidence = chunkRepository

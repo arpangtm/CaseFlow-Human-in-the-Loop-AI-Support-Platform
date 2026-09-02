@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-class SupportCaseService {
+class SupportCaseService implements CaseReader {
 
     private final SupportCaseRepository repository;
     private final CaseClassifier classifier;
@@ -38,7 +38,7 @@ class SupportCaseService {
     }
 
     @Transactional(readOnly = true)
-    CaseResponse get(UUID id, UUID organizationId) {
+    public CaseResponse get(UUID id, UUID organizationId) {
         return repository.findByIdAndOrganizationId(id, organizationId)
                 .map(CaseResponse::from)
                 .orElseThrow(() -> new CaseNotFoundException(id));
