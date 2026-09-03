@@ -3,9 +3,13 @@ import type { FormEvent } from 'react'
 import {
   CaseApiError,
   createCase,
+  generateRecommendation,
+  getReview,
   listCases,
+  listRecommendations,
+  submitReview,
 } from './cases'
-import type { CasePriority, SupportCase } from './cases'
+import type { AiRecommendation, CasePriority, HumanReview, ReviewDecisionType, SupportCase } from './cases'
 
 type PriorityFilter = 'ALL' | CasePriority
 
@@ -204,7 +208,7 @@ function App() {
           </div>
 
           <div className="detail-panel">
-            {selectedCase ? <CaseDetail supportCase={selectedCase} /> : <DetailEmptyState />}
+            {selectedCase ? <CaseDetail key={selectedCase.id} supportCase={selectedCase} /> : <DetailEmptyState />}
           </div>
         </section>
       </main>
@@ -296,7 +300,241 @@ function CaseDetail({ supportCase }: { supportCase: SupportCase }) {
           <strong>Unassigned</strong>
         </div>
       </section>
+
+      <CaseReviewPanel caseId={supportCase.id} />
     </article>
+  )
+}
+
+function CaseReviewPanel({ caseId }: { caseId: string }) {
+  const [recommendation, setRecommendation] = useState<AiRecommendation | null>(null)
+  const [review, setReview] = useState<HumanReview | null>(null)
+  const [draft, setDraft] = useState('')
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [showRejection, setShowRejection] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [working, setWorking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    async function loadRecommendation() {
+      try {
+        const recommendations = await listRecommendations(caseId, controller.signal)
+        const latest = recommendations[0] ?? null
+        setRecommendation(latest)
+        setDraft(latest?.draftResponse ?? '')
+        if (latest) {
+          setReview(await getReview(latest.id, controller.signal))
+        }
+      } catch (loadError) {
+        if (loadError instanceof DOMException && loadError.name === 'AbortError') return
+        setError(loadError instanceof CaseApiError ? loadError.message : 'Review data could not be loaded.')
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+
+    void loadRecommendation()
+    return () => controller.abort()
+  }, [caseId])
+
+  async function handleGenerate() {
+    setWorking(true)
+    setError(null)
+    try {
+      const generated = await generateRecommendation(caseId)
+      setRecommendation(generated)
+      setDraft(generated.draftResponse)
+      setReview(null)
+    } catch (generationError) {
+      setError(generationError instanceof CaseApiError
+        ? generationError.message
+        : 'A recommendation could not be generated.')
+    } finally {
+      setWorking(false)
+    }
+  }
+
+  async function handleReview(decision: ReviewDecisionType) {
+    if (!recommendation) return
+    setWorking(true)
+    setError(null)
+    try {
+      const recorded = await submitReview(recommendation.id, {
+        decision,
+        editedResponse: decision === 'EDITED' ? draft.trim() : undefined,
+        rejectionReason: decision === 'REJECTED' ? rejectionReason.trim() : undefined,
+      })
+      setReview(recorded)
+      setShowRejection(false)
+    } catch (reviewError) {
+      setError(reviewError instanceof CaseApiError ? reviewError.message : 'The review could not be recorded.')
+    } finally {
+      setWorking(false)
+    }
+  }
+
+  if (loading) {
+    return <div className="review-loading" aria-label="Loading recommendation"><span /><span /><span /></div>
+  }
+
+  if (!recommendation) {
+    return (
+      <section className="recommendation-panel" aria-labelledby="recommendation-title">
+        <div className="recommendation-heading">
+          <div>
+            <p className="eyebrow">Human-in-the-loop</p>
+            <h3 id="recommendation-title">AI recommendation</h3>
+          </div>
+          <span className="review-status neutral">Not generated</span>
+        </div>
+        <p className="recommendation-intro">
+          Retrieve verified guidance and prepare a draft for a human decision.
+        </p>
+        {error ? <p className="form-error" role="alert">{error}</p> : null}
+        <button className="primary-button" type="button" onClick={() => void handleGenerate()} disabled={working}>
+          {working ? 'Generating…' : 'Generate recommendation'}
+        </button>
+      </section>
+    )
+  }
+
+  if (review) {
+    return <CompletedReview recommendation={recommendation} review={review} />
+  }
+
+  const draftChanged = draft.trim() !== recommendation.draftResponse.trim()
+  const confidence = Math.round(recommendation.confidence * 100)
+
+  return (
+    <section className="recommendation-panel" aria-labelledby="recommendation-title">
+      <div className="recommendation-heading">
+        <div>
+          <p className="eyebrow">Human-in-the-loop</p>
+          <h3 id="recommendation-title">AI recommendation</h3>
+        </div>
+        <span className="review-status pending">Awaiting review</span>
+      </div>
+
+      <div className="recommendation-callout">
+        <span aria-hidden="true">✦</span>
+        <p>AI-generated draft. Verify the response and cited evidence before recording a decision.</p>
+      </div>
+
+      <div className="recommendation-facts" aria-label="Recommendation details">
+        <div><span>Suggested action</span><strong>{readableLabel(recommendation.recommendedAction)}</strong></div>
+        <div><span>Confidence</span><strong>{confidence}%</strong></div>
+        <div><span>Version</span><strong>{recommendation.version}</strong></div>
+      </div>
+
+      <label className="draft-field">
+        <span>Customer response draft</span>
+        <textarea
+          rows={7}
+          maxLength={20000}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+      </label>
+
+      <div className="evidence-list" aria-label="Cited evidence">
+        <div className="evidence-heading">
+          <strong>Cited evidence</strong>
+          <span>{recommendation.citations.length} sources</span>
+        </div>
+        {recommendation.citations.length === 0 ? (
+          <p>No verified evidence was found. The suggested action is to escalate.</p>
+        ) : recommendation.citations.map((citation) => (
+          <details key={citation.chunkId}>
+            <summary>{citation.title}</summary>
+            <p>{citation.content}</p>
+            {citation.sourceUrl ? <a href={citation.sourceUrl} target="_blank" rel="noreferrer">Open source</a> : null}
+          </details>
+        ))}
+      </div>
+
+      {showRejection ? (
+        <div className="rejection-box">
+          <label>
+            <span>Reason for rejection</span>
+            <textarea
+              rows={3}
+              maxLength={2000}
+              value={rejectionReason}
+              onChange={(event) => setRejectionReason(event.target.value)}
+              placeholder="Explain why this recommendation should not be used."
+            />
+          </label>
+          <div>
+            <button className="secondary-button" type="button" onClick={() => setShowRejection(false)}>Cancel</button>
+            <button
+              className="danger-button"
+              type="button"
+              disabled={working || rejectionReason.trim().length === 0}
+              onClick={() => void handleReview('REJECTED')}
+            >
+              {working ? 'Recording…' : 'Confirm rejection'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
+      <div className="review-actions">
+        <div>
+          <button className="primary-button" type="button" disabled={working || draftChanged} onClick={() => void handleReview('APPROVED')}>
+            {working ? 'Recording…' : 'Approve draft'}
+          </button>
+          <button className="secondary-button" type="button" disabled={working || !draftChanged || draft.trim().length === 0} onClick={() => void handleReview('EDITED')}>
+            Save edited response
+          </button>
+        </div>
+        <button className="text-danger-button" type="button" disabled={working} onClick={() => setShowRejection(true)}>
+          Reject recommendation
+        </button>
+      </div>
+      <p className="safety-note">Recording a decision does not send a customer reply or resolve the case.</p>
+    </section>
+  )
+}
+
+function CompletedReview({
+  recommendation,
+  review,
+}: {
+  recommendation: AiRecommendation
+  review: HumanReview
+}) {
+  return (
+    <section className="recommendation-panel completed-review" aria-labelledby="recommendation-title">
+      <div className="recommendation-heading">
+        <div>
+          <p className="eyebrow">Human decision</p>
+          <h3 id="recommendation-title">Recommendation reviewed</h3>
+        </div>
+        <span className={`review-status ${review.decision.toLowerCase()}`}>{readableLabel(review.decision)}</span>
+      </div>
+      <p className="review-byline">
+        Recorded by <strong>{review.reviewerName}</strong> on {formatDate(review.createdAt)}
+      </p>
+      {review.finalResponse ? (
+        <div className="review-result">
+          <span>Reviewed response · not sent</span>
+          <p>{review.finalResponse}</p>
+        </div>
+      ) : (
+        <div className="review-result rejected-result">
+          <span>Rejection reason</span>
+          <p>{review.rejectionReason}</p>
+        </div>
+      )}
+      <div className="recommendation-footnote">
+        Recommendation version {recommendation.version} · {readableLabel(recommendation.recommendedAction)}
+      </div>
+      <p className="safety-note">No customer reply was sent and the case status was not changed.</p>
+    </section>
   )
 }
 

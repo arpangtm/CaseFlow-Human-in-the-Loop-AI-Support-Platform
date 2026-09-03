@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 interface AiRecommendationRepository extends JpaRepository<AiRecommendation, UUID> {
@@ -24,4 +25,6 @@ interface AiRecommendationRepository extends JpaRepository<AiRecommendation, UUI
             UUID organizationId,
             UUID caseId
     );
+
+    Optional<AiRecommendation> findByIdAndOrganizationId(UUID id, UUID organizationId);
 }

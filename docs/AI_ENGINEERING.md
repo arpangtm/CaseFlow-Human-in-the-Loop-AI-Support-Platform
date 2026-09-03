@@ -21,6 +21,10 @@ Recommendation orchestration depends on a `RecommendationProvider` interface and
 
 Before persistence, provider output is rejected if it is incomplete, exceeds bounds, or cites a chunk outside the evidence retrieved for the case. Valid output is saved as an immutable recommendation version with evidence snapshots, prompt/schema versions, provider and model configuration, latency, and token usage when supplied. Persistence always precedes presentation for review, and recommendation generation has no customer-facing side effect.
 
+## Human review
+
+Each recommendation accepts one append-only human decision. Approval preserves the generated draft, editing requires the reviewer’s replacement response, and rejection requires a reason while producing no final response. The decision stores reviewer identity and review latency before the recommendation lifecycle is marked reviewed. The reviewed response remains an internal artifact: this workflow has no operation that sends it to a customer or resolves the case.
+
 ## Evaluation
 
 Track retrieval relevance, citation validity, schema validity, reviewer acceptance/edit/rejection, edit distance, response latency, and eventual case outcome. Evaluation data must be organization-scoped and tied to a specific recommendation version.

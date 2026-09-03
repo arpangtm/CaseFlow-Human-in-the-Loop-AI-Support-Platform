@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -77,6 +78,10 @@ class AiRecommendation {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Version
+    @Column(name = "lifecycle_version", nullable = false)
+    private long lifecycleVersion;
 
     protected AiRecommendation() {
     }
@@ -180,5 +185,12 @@ class AiRecommendation {
 
     Instant getCreatedAt() {
         return createdAt;
+    }
+
+    void markReviewed() {
+        if (status != RecommendationStatus.PENDING_REVIEW) {
+            throw new RecommendationAlreadyReviewedException(id);
+        }
+        status = RecommendationStatus.REVIEWED;
     }
 }

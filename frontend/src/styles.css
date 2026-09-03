@@ -184,6 +184,13 @@ h1 {
   opacity: 0.7;
 }
 
+.secondary-button:disabled,
+.danger-button:disabled,
+.text-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
 .secondary-button {
   background: #fff;
   border-color: var(--line);
@@ -594,6 +601,312 @@ h1 {
   font-size: 13px;
 }
 
+.recommendation-panel {
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid var(--line);
+}
+
+.recommendation-heading,
+.evidence-heading,
+.review-actions,
+.review-actions > div,
+.rejection-box > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recommendation-heading h3 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.recommendation-heading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.review-status {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.review-status.neutral {
+  color: #626b65;
+  background: #edf0ed;
+}
+
+.review-status.pending {
+  color: #875112;
+  background: #f8ead7;
+}
+
+.review-status.approved,
+.review-status.edited {
+  color: var(--green-dark);
+  background: var(--green-soft);
+}
+
+.review-status.rejected {
+  color: #8a2927;
+  background: #f9e3e2;
+}
+
+.recommendation-intro {
+  margin: 13px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.recommendation-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 18px 0;
+  padding: 13px 14px;
+  border: 1px solid #d6e5db;
+  border-radius: 11px;
+  color: #315a47;
+  background: #f0f7f3;
+}
+
+.recommendation-callout p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.recommendation-facts {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.7fr;
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--line);
+}
+
+.recommendation-facts div {
+  padding: 12px 13px;
+  background: #fafbfa;
+}
+
+.recommendation-facts span,
+.recommendation-facts strong {
+  display: block;
+}
+
+.recommendation-facts span {
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.recommendation-facts strong {
+  font-size: 12px;
+}
+
+.draft-field,
+.draft-field > span,
+.rejection-box label,
+.rejection-box label > span {
+  display: block;
+}
+
+.draft-field {
+  margin-top: 18px;
+}
+
+.draft-field > span,
+.rejection-box label > span {
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.draft-field textarea,
+.rejection-box textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #cbd3cc;
+  border-radius: 11px;
+  background: #fbfcfb;
+  color: var(--ink);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.evidence-list {
+  margin-top: 18px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+
+.evidence-heading {
+  padding: 11px 13px;
+  background: #f6f8f6;
+}
+
+.evidence-heading strong {
+  font-size: 12px;
+}
+
+.evidence-heading span {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.evidence-list > p {
+  margin: 0;
+  padding: 13px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.evidence-list details {
+  padding: 11px 13px;
+  border-top: 1px solid var(--line);
+}
+
+.evidence-list summary {
+  color: #344139;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.evidence-list details p {
+  margin: 10px 0 7px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.evidence-list a {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.review-actions {
+  align-items: flex-start;
+  margin-top: 19px;
+}
+
+.review-actions > div {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.text-danger-button {
+  min-height: 42px;
+  padding: 0 4px;
+  border: 0;
+  color: var(--red);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #9e3431;
+  border-radius: 11px;
+  color: #fff;
+  background: var(--red);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rejection-box {
+  margin-top: 17px;
+  padding: 15px;
+  border: 1px solid #ecc9c7;
+  border-radius: 12px;
+  background: #fff8f7;
+}
+
+.rejection-box > div {
+  justify-content: flex-end;
+  margin-top: 11px;
+}
+
+.safety-note,
+.recommendation-footnote,
+.review-byline {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.safety-note {
+  margin: 13px 0 0;
+}
+
+.review-byline {
+  margin: 13px 0 18px;
+}
+
+.review-result {
+  padding: 15px;
+  border-left: 3px solid var(--green);
+  background: #f5f8f6;
+}
+
+.review-result.rejected-result {
+  border-left-color: var(--red);
+  background: #fff7f6;
+}
+
+.review-result span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.review-result p {
+  margin: 8px 0 0;
+  color: #37423b;
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.recommendation-footnote {
+  margin-top: 13px;
+}
+
+.review-loading {
+  display: grid;
+  gap: 9px;
+  margin-top: 30px;
+  padding-top: 30px;
+  border-top: 1px solid var(--line);
+}
+
+.review-loading span {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #edf0ed 25%, #f7f8f7 50%, #edf0ed 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.review-loading span:nth-child(1) { width: 40%; }
+.review-loading span:nth-child(2) { width: 90%; }
+.review-loading span:nth-child(3) { width: 72%; }
+
 .detail-empty,
 .state-message {
   display: flex;
@@ -878,6 +1191,26 @@ h1 {
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .recommendation-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .review-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .review-actions > div {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .review-actions .primary-button,
+  .review-actions .secondary-button,
+  .text-danger-button {
+    width: 100%;
   }
 
   .case-dialog > header,

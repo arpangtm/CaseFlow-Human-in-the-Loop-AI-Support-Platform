@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import type { SupportCase } from './cases'
+import type { AiRecommendation, HumanReview, ReviewDecisionType, SupportCase } from './cases'
 
 const cases: SupportCase[] = [
   {
@@ -31,6 +31,38 @@ const cases: SupportCase[] = [
   },
 ]
 
+const recommendation: AiRecommendation = {
+  id: '12d5ea50-360f-4acf-b4e1-d4b7c8671990',
+  organizationId: '00000000-0000-0000-0000-000000000001',
+  caseId: cases[0].id,
+  version: 1,
+  status: 'PENDING_REVIEW',
+  draftResponse: 'Please restart the affected API service and confirm that health checks recover.',
+  recommendedAction: 'RESPOND_WITH_GUIDANCE',
+  confidence: 0.84,
+  escalationRequired: false,
+  citations: [{
+    articleId: 'ec09f9f1-31fd-48be-94ca-a8fe8acded33',
+    chunkId: '764f8b50-8a8f-47b9-a734-cde174965da4',
+    position: 0,
+    title: 'Recovering the production API',
+    content: 'Restart the affected API service and verify health checks before closing the incident.',
+    sourceUrl: 'https://docs.example.com/api-recovery',
+    retrievalScore: 0.77,
+  }],
+  model: {
+    provider: 'local',
+    model: 'caseflow-grounded-template-v1',
+    configuration: {},
+    promptVersion: 'case-recommendation-v1',
+    schemaVersion: 'recommendation-output-v1',
+    latencyMs: 12,
+    inputTokens: null,
+    outputTokens: null,
+  },
+  createdAt: '2026-09-03T13:30:00Z',
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return Promise.resolve(
     new Response(JSON.stringify(body), {
@@ -42,7 +74,11 @@ function jsonResponse(body: unknown, status = 200) {
 
 describe('agent triage workspace', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn(() => jsonResponse(cases)))
+    vi.stubGlobal('fetch', vi.fn((input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes('/recommendations')) return jsonResponse([])
+      return jsonResponse(cases)
+    }))
   })
 
   afterEach(() => {
@@ -99,7 +135,7 @@ describe('agent triage workspace', () => {
     await user.click(screen.getByRole('button', { name: 'Create case' }))
 
     expect(await screen.findByRole('heading', { name: created.subject })).toBeInTheDocument()
-    expect(fetchMock).toHaveBeenLastCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       '/api/v1/cases',
       expect.objectContaining({
         method: 'POST',
@@ -107,4 +143,109 @@ describe('agent triage workspace', () => {
       }),
     )
   })
+
+  it('records an approval without presenting it as a sent response', async () => {
+    const user = userEvent.setup()
+    const approved = reviewResult('APPROVED', recommendation.draftResponse)
+    const fetchMock = installReviewFetch(approved)
+
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'AI recommendation' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Approve draft' }))
+
+    expect(await screen.findByRole('heading', { name: 'Recommendation reviewed' })).toBeInTheDocument()
+    expect(screen.getByText('Reviewed response · not sent')).toBeInTheDocument()
+    expect(screen.getByText('No customer reply was sent and the case status was not changed.')).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/v1/recommendations/${recommendation.id}/review`,
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"decision":"APPROVED"'),
+      }),
+    )
+  })
+
+  it('records the human-edited response instead of the AI draft', async () => {
+    const user = userEvent.setup()
+    const editedResponse = 'Please restart the API service, then share the health-check result with us.'
+    const edited = reviewResult('EDITED', editedResponse)
+    const fetchMock = installReviewFetch(edited)
+
+    render(<App />)
+    const draft = await screen.findByRole('textbox', { name: 'Customer response draft' })
+    await user.clear(draft)
+    await user.type(draft, editedResponse)
+    await user.click(screen.getByRole('button', { name: 'Save edited response' }))
+
+    expect(await screen.findByText(editedResponse)).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/v1/recommendations/${recommendation.id}/review`,
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"decision":"EDITED"'),
+      }),
+    )
+  })
+
+  it('requires a reason before recording a rejection', async () => {
+    const user = userEvent.setup()
+    const reason = 'The cited recovery procedure does not apply to this service.'
+    const rejected = reviewResult('REJECTED', null, reason)
+    const fetchMock = installReviewFetch(rejected)
+
+    render(<App />)
+    expect(await screen.findByRole('heading', { name: 'AI recommendation' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Reject recommendation' }))
+    const confirm = screen.getByRole('button', { name: 'Confirm rejection' })
+    expect(confirm).toBeDisabled()
+    await user.type(screen.getByRole('textbox', { name: 'Reason for rejection' }), reason)
+    await user.click(confirm)
+
+    expect(await screen.findByText(reason)).toBeInTheDocument()
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      `/api/v1/recommendations/${recommendation.id}/review`,
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.stringContaining('"decision":"REJECTED"'),
+      }),
+    )
+  })
 })
+
+function reviewResult(
+  decision: ReviewDecisionType,
+  finalResponse: string | null,
+  rejectionReason: string | null = null,
+): HumanReview {
+  return {
+    id: '2fcb3194-d6aa-4c48-b6bf-2b4557c2da66',
+    organizationId: recommendation.organizationId,
+    recommendationId: recommendation.id,
+    caseId: recommendation.caseId,
+    reviewerId: '00000000-0000-0000-0000-000000000003',
+    reviewerName: 'Demo Agent',
+    decision,
+    finalResponse,
+    rejectionReason,
+    reviewLatencyMs: 90000,
+    createdAt: '2026-09-03T13:31:30Z',
+  }
+}
+
+function installReviewFetch(review: HumanReview) {
+  const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input)
+    if (url.includes(`/recommendations/${recommendation.id}/review`) && init?.method === 'POST') {
+      return jsonResponse(review, 201)
+    }
+    if (url.includes(`/recommendations/${recommendation.id}/review`)) {
+      return jsonResponse({ detail: 'No review found' }, 404)
+    }
+    if (url.includes(`/cases/${recommendation.caseId}/recommendations`)) {
+      return jsonResponse([recommendation])
+    }
+    return jsonResponse(cases)
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}

@@ -12,7 +12,8 @@ The current application provides:
 - validation, RFC 9457 problem responses, health endpoints, and automated tests;
 - a React/TypeScript agent workspace for submitting, searching, filtering, and reviewing cases;
 - organization-scoped knowledge article ingestion and ranked PostgreSQL full-text retrieval;
-- grounded, structured AI recommendations persisted with citations and model metadata for human review.
+- grounded, structured AI recommendations persisted with citations and model metadata;
+- append-only human approve, edit, and reject decisions with reviewer identity and latency.
 
 ## Run locally
 
@@ -76,6 +77,23 @@ curl 'http://localhost:8080/api/v1/cases/{caseId}/recommendations?organizationId
 ```
 
 Generated recommendations are advisory records with `PENDING_REVIEW` status. These endpoints cannot send a response or resolve a case.
+
+Record and retrieve a human review decision using the seeded demo reviewer:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/recommendations/{recommendationId}/review \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "organizationId":"00000000-0000-0000-0000-000000000001",
+    "reviewerId":"00000000-0000-0000-0000-000000000003",
+    "decision":"EDITED",
+    "editedResponse":"Please request a new reset link from Account Settings."
+  }'
+
+curl 'http://localhost:8080/api/v1/recommendations/{recommendationId}/review?organizationId=00000000-0000-0000-0000-000000000001'
+```
+
+Recording a decision does not send the reviewed response or resolve the support case.
 
 ## Test
 
