@@ -7,6 +7,8 @@ import java.util.UUID;
 
 interface AiRecommendationCitationRepository extends JpaRepository<AiRecommendationCitation, AiRecommendationCitation.CitationId> {
 
+    int countByOrganizationIdAndRecommendationId(UUID organizationId, UUID recommendationId);
+
     List<AiRecommendationCitation> findAllByOrganizationIdAndRecommendationIdOrderByPositionAsc(
             UUID organizationId,
             UUID recommendationId

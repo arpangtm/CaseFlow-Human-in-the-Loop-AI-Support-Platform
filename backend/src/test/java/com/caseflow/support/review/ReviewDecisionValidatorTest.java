@@ -85,6 +85,9 @@ class ReviewDecisionValidatorTest {
                 UUID.randomUUID(),
                 "PENDING_REVIEW",
                 "Original AI draft",
+                0.8,
+                12,
+                1,
                 Instant.parse("2026-09-03T12:00:00Z")
         );
     }

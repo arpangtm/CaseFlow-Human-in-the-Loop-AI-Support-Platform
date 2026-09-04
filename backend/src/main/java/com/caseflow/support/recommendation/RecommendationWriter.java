@@ -16,15 +16,18 @@ class RecommendationWriter {
 
     private final AiRecommendationRepository recommendationRepository;
     private final AiRecommendationCitationRepository citationRepository;
+    private final RecommendationObservationRecorder observationRecorder;
     private final Clock clock;
 
     RecommendationWriter(
             AiRecommendationRepository recommendationRepository,
             AiRecommendationCitationRepository citationRepository,
+            RecommendationObservationRecorder observationRecorder,
             Clock clock
     ) {
         this.recommendationRepository = recommendationRepository;
         this.citationRepository = citationRepository;
+        this.observationRecorder = observationRecorder;
         this.clock = clock;
     }
 
@@ -63,6 +66,18 @@ class RecommendationWriter {
                 ))
                 .toList();
         citationRepository.saveAll(citations);
+        ProviderMetadata metadata = providerRecommendation.metadata();
+        observationRecorder.record(new RecommendationObservation(
+                organizationId,
+                caseId,
+                saved.getId(),
+                metadata.provider(),
+                metadata.model(),
+                metadata.latencyMs(),
+                metadata.inputTokens(),
+                metadata.outputTokens(),
+                saved.getCreatedAt()
+        ));
         return RecommendationResponse.from(saved, citations);
     }
 

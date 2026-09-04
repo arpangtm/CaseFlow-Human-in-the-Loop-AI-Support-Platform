@@ -36,9 +36,11 @@ Recommendation generation reads a tenant-scoped case, retrieves bounded evidence
 
 Human review resolves the reviewer and recommendation inside the same organization boundary, validates decision-specific payload rules, and atomically appends one decision while advancing the recommendation lifecycle. Approvals snapshot the unchanged draft, edits snapshot the human response, and rejections store a reason without a final response. The decision records reviewer identity and elapsed review time. No review path sends customer content or changes the support-case resolution state.
 
+Evaluation is produced in the human-review transaction and is uniquely tied to the immutable recommendation and review records. It captures the review outcome, schema and citation validity, citation count, model confidence, generation and review latency, and normalized token edit distance when a reviewer changes the draft. Recommendation execution logs store tenant-safe identifiers and provider performance metadata only; they deliberately exclude case text, evidence text, prompts, drafts, and final responses. Micrometer publishes low-cardinality generation, token, review, latency, and edit-distance signals through Actuator without organization identifiers as metric tags.
+
 ## Data model sequence
 
-The schema includes organizations, users, customers, support cases, knowledge articles, retrievable knowledge chunks, versioned AI recommendations, citation snapshots, and human review decisions. Later migrations add comments, execution logs, and performance metrics alongside the feature that owns them.
+The schema includes organizations, users, customers, support cases, knowledge articles, retrievable knowledge chunks, versioned AI recommendations, citation snapshots, human review decisions, AI evaluations, and agent execution logs. Runtime performance metrics are published through Micrometer for collection by the configured monitoring backend. Case comments remain intentionally deferred until their workflow is implemented.
 
 ## Key invariants
 

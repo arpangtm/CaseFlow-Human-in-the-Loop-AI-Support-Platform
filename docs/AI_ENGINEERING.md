@@ -27,7 +27,15 @@ Each recommendation accepts one append-only human decision. Approval preserves t
 
 ## Evaluation
 
-Track retrieval relevance, citation validity, schema validity, reviewer acceptance/edit/rejection, edit distance, response latency, and eventual case outcome. Evaluation data must be organization-scoped and tied to a specific recommendation version.
+Every human decision creates one organization-scoped evaluation tied to that recommendation version and review record. The synchronous evaluator records:
+
+- accepted, edited, or rejected review outcome;
+- schema and citation validity established by the pre-persistence validation gate;
+- citation count and model confidence;
+- provider generation latency and end-to-end review latency;
+- normalized token edit distance for approved or edited responses.
+
+Rejections intentionally have no edit-distance value because they produce no final response. Execution logs store provider, model, token, timing, and tenant-safe correlation identifiers without customer or prompt content. Micrometer counters, timers, and distributions expose aggregate operational behavior without tenant IDs in tags. Retrieval relevance labels and eventual case outcomes require later ground-truth workflows; they should be added to the same versioned evaluation boundary rather than inferred from sensitive telemetry.
 
 ## Prompt/data hygiene
 

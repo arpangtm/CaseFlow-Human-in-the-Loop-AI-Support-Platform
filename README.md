@@ -13,7 +13,8 @@ The current application provides:
 - a React/TypeScript agent workspace for submitting, searching, filtering, and reviewing cases;
 - organization-scoped knowledge article ingestion and ranked PostgreSQL full-text retrieval;
 - grounded, structured AI recommendations persisted with citations and model metadata;
-- append-only human approve, edit, and reject decisions with reviewer identity and latency.
+- append-only human approve, edit, and reject decisions with reviewer identity and latency;
+- tenant-scoped recommendation evaluations, privacy-safe execution logs, and Actuator metrics.
 
 ## Run locally
 
@@ -94,6 +95,16 @@ curl 'http://localhost:8080/api/v1/recommendations/{recommendationId}/review?org
 ```
 
 Recording a decision does not send the reviewed response or resolve the support case.
+
+Retrieve the deterministic evaluation created after human review:
+
+```bash
+curl 'http://localhost:8080/api/v1/recommendations/{recommendationId}/evaluation?organizationId=00000000-0000-0000-0000-000000000001'
+
+curl 'http://localhost:8080/actuator/metrics/caseflow.ai.reviews'
+```
+
+Evaluation records connect model validity, citation use, confidence, latency, and the human outcome to an immutable recommendation version. Diagnostic records contain identifiers and operational metadata, never case text, article text, prompts, or reviewed responses.
 
 ## Test
 

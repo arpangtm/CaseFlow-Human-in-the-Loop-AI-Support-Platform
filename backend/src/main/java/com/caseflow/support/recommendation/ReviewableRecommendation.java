@@ -9,15 +9,21 @@ public record ReviewableRecommendation(
         UUID caseId,
         String status,
         String draftResponse,
+        double confidence,
+        long generationLatencyMs,
+        int citationCount,
         Instant createdAt
 ) {
-    static ReviewableRecommendation from(AiRecommendation recommendation) {
+    static ReviewableRecommendation from(AiRecommendation recommendation, int citationCount) {
         return new ReviewableRecommendation(
                 recommendation.getId(),
                 recommendation.getOrganizationId(),
                 recommendation.getCaseId(),
                 recommendation.getStatus().name(),
                 recommendation.getDraftResponse(),
+                recommendation.getConfidence(),
+                recommendation.getLatencyMs(),
+                citationCount,
                 recommendation.getCreatedAt()
         );
     }

@@ -4,6 +4,7 @@ import com.caseflow.support.casework.CaseNotFoundException;
 import com.caseflow.support.recommendation.RecommendationGenerationException;
 import com.caseflow.support.recommendation.RecommendationAlreadyReviewedException;
 import com.caseflow.support.recommendation.RecommendationNotFoundException;
+import com.caseflow.support.observability.EvaluationNotFoundException;
 import com.caseflow.support.review.InvalidReviewDecisionException;
 import com.caseflow.support.review.ReviewDecisionNotFoundException;
 import com.caseflow.support.review.ReviewerNotFoundException;
@@ -27,6 +28,7 @@ class ApiExceptionHandler {
     }
 
     @ExceptionHandler({RecommendationNotFoundException.class, ReviewDecisionNotFoundException.class,
+            EvaluationNotFoundException.class,
             ReviewerNotFoundException.class})
     ProblemDetail reviewNotFound(RuntimeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());

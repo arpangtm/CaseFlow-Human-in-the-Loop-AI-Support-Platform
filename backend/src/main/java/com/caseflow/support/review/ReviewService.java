@@ -20,6 +20,7 @@ class ReviewService {
     private final SupportUserRepository userRepository;
     private final ReviewDecisionRepository decisionRepository;
     private final ReviewDecisionValidator validator;
+    private final ReviewEvaluationRecorder evaluationRecorder;
     private final Clock clock;
 
     ReviewService(
@@ -27,12 +28,14 @@ class ReviewService {
             SupportUserRepository userRepository,
             ReviewDecisionRepository decisionRepository,
             ReviewDecisionValidator validator,
+            ReviewEvaluationRecorder evaluationRecorder,
             Clock clock
     ) {
         this.recommendationGateway = recommendationGateway;
         this.userRepository = userRepository;
         this.decisionRepository = decisionRepository;
         this.validator = validator;
+        this.evaluationRecorder = evaluationRecorder;
         this.clock = clock;
     }
 
@@ -71,6 +74,20 @@ class ReviewService {
         );
         ReviewDecision saved = decisionRepository.saveAndFlush(decision);
         recommendationGateway.markReviewed(recommendationId, request.organizationId());
+        evaluationRecorder.record(new ReviewEvaluationEvent(
+                request.organizationId(),
+                recommendation.caseId(),
+                recommendationId,
+                saved.getId(),
+                saved.getDecision(),
+                recommendation.draftResponse(),
+                saved.getFinalResponse(),
+                recommendation.confidence(),
+                recommendation.generationLatencyMs(),
+                latencyMs,
+                recommendation.citationCount(),
+                reviewedAt
+        ));
         return ReviewDecisionResponse.from(saved, reviewer);
     }
 

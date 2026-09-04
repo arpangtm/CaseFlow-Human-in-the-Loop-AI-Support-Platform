@@ -9,16 +9,24 @@ import java.util.UUID;
 class JpaRecommendationReviewGateway implements RecommendationReviewGateway {
 
     private final AiRecommendationRepository repository;
+    private final AiRecommendationCitationRepository citationRepository;
 
-    JpaRecommendationReviewGateway(AiRecommendationRepository repository) {
+    JpaRecommendationReviewGateway(
+            AiRecommendationRepository repository,
+            AiRecommendationCitationRepository citationRepository
+    ) {
         this.repository = repository;
+        this.citationRepository = citationRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public ReviewableRecommendation get(UUID recommendationId, UUID organizationId) {
         return repository.findByIdAndOrganizationId(recommendationId, organizationId)
-                .map(ReviewableRecommendation::from)
+                .map(recommendation -> ReviewableRecommendation.from(
+                        recommendation,
+                        citationRepository.countByOrganizationIdAndRecommendationId(organizationId, recommendationId)
+                ))
                 .orElseThrow(() -> new RecommendationNotFoundException(recommendationId));
     }
 
