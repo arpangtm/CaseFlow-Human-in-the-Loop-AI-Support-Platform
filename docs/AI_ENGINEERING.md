@@ -44,3 +44,7 @@ Rejections intentionally have no edit-distance value because they produce no fin
 - Redact sensitive values before telemetry export.
 - Use bounded context sizes and explicit refusal/escalation states.
 - Version prompts and output schemas in source control.
+
+## Production safeguards
+
+Production telemetry must retain the same content boundary as local execution logs: identifiers and bounded operational metadata are allowed, while customer text, knowledge text, drafts, reviewed responses, and full prompts are not. The deployed API remains private behind the same-origin gateway, and management access is limited to health probes. Production configuration must be supplied through deployment secrets rather than committed environment files.

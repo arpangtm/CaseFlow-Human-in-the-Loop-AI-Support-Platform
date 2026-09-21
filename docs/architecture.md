@@ -20,6 +20,10 @@ Spring Boot API ----> PostgreSQL
 
 The React workspace is a separate Vite application. During local development it proxies `/api` to Spring Boot; production can serve both applications behind the same origin.
 
+## Production boundary
+
+The production deployment runs PostgreSQL and Spring Boot on a private Compose network. A non-root Nginx frontend container is the only published service and proxies same-origin API traffic to Spring Boot; it does not proxy management endpoints. A TLS-terminating reverse proxy belongs in front of the loopback-bound gateway when the service is public. The production Spring profile requires database configuration, validates migrations, disables Flyway clean, uses graceful shutdown, suppresses exception details, and exposes only health probes. API responses are marked non-cacheable and include browser hardening headers.
+
 ## Backend boundaries
 
 - `casework`: intake, classification, priority, lifecycle, and comments.

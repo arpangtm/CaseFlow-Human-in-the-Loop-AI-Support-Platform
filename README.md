@@ -120,6 +120,20 @@ npm run build
 
 The PostgreSQL integration test runs when Docker is available and is skipped otherwise.
 
+## Production deployment
+
+The production Compose definition keeps PostgreSQL and the backend on a private network. Only the same-origin frontend gateway is published, bound to loopback by default. Place a TLS-terminating reverse proxy in front of that loopback port for public deployment.
+
+```bash
+cp .env.production.example .env.production
+# Replace POSTGRES_PASSWORD with a long, unique secret.
+docker compose --env-file .env.production -f compose.production.yaml up --build -d
+```
+
+The production Spring profile requires explicit database settings, validates Flyway migrations, disables destructive Flyway clean, exposes only health management endpoints, and returns no exception details. The gateway adds browser security headers and proxies only `/api` to the backend. Do not commit `.env.production`; use a secret manager or your deployment platform's encrypted environment settings instead.
+
+CI runs backend tests—including PostgreSQL Testcontainers—and frontend lint, tests, and production build for pull requests and updates to `main`.
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
